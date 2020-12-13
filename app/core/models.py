@@ -36,6 +36,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     postal_code = models.CharField(max_length=25)
     birth_date = models.DateField(auto_now=False, auto_now_add=False, null=True)
     email = models.EmailField(max_length=254)
+    created_at = models.DateTimeField(auto_now_add=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
