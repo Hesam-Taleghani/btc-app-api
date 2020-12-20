@@ -28,13 +28,11 @@ class UserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     """The Costume User Model Works with username, has extra fields."""
     username = models.CharField(max_length=30, unique=True)
-    name = models.CharField(max_length=60)
-    # profile_picture = models.ImageField(upload_to=None)
-    address = models.CharField(max_length=255)
-    phone = models.CharField(max_length=30)
-    # nationality = models.ForeignKey("app.Model", verbose_name=_(""), on_delete=models.CASCADE)
-    postal_code = models.CharField(max_length=25)
-    birth_date = models.DateField(auto_now=False, auto_now_add=False, null=True)
+    name = models.CharField(max_length=60, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
+    phone = models.CharField(max_length=30, blank=True, null=True)
+    postal_code = models.CharField(max_length=25, blank=True, null=True)
+    birth_date = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True)
     email = models.EmailField(max_length=254)
     created_at = models.DateTimeField(auto_now_add=True)
     is_staff = models.BooleanField(default=False)
