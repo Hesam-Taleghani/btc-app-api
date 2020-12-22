@@ -6,6 +6,7 @@ from rest_framework import status
 
 CREATE_ADMIN_URL = reverse('admins:create')
 TOKEN_URL = reverse('admins:token')
+MY_PROFILE_URL = reverse('admins:me')
 
 def create_admin(**params):
     return get_user_model().objects.create_user(**params)
@@ -90,5 +91,61 @@ class PrivateAdminApiTest(TestCase):
         response = self.client.post(TOKEN_URL, payload)
         self.assertNotIn('token', response.data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+    
+    def test_authentication_needed_for_profile(self):
+        """Test that authentication is needed to see and update profile"""
+        response = self.client.get(MY_PROFILE_URL)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    
+class PrivateAdminProfileApi(TestCase):
+    """Test the profile for authorized admin"""
 
+    def setUp(self):
+        self.admin = create_admin(
+            username='testadmin',
+            name='test admin',
+            email='test@admin.com',
+            password='admin1234admin',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
+    
+    def test_retrieve_profile_success(self):
+        """Test retrieving profile for logged in admin"""
+        response = self.client.get(MY_PROFILE_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {
+            'username': self.admin.username,
+            'name': self.admin.name,
+            'email': self.admin.email,
+            'address': self.admin.address,
+            'phone': self.admin.phone,
+            'postal_code': self.admin.postal_code,
+            'birth_date': self.admin.birth_date,
+            'title': self.admin.title,
+            'is_staff': False,
+        })
+
+    def test_post_profile_not_allowed(self):
+        """Test that post method is not allowed on this url"""
+        response = self.client.post(MY_PROFILE_URL)
+        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_updating_admin_profile(self):
+        """Test updating admin profile for logged in admins"""
+        payload = {
+            'name':'new name test',
+            'email':'changed@test.com',
+            'password':'newadminpassword'
+        }
+        response = self.client.patch(MY_PROFILE_URL, payload)
+        self.admin.refresh_from_db()
+        self.assertEqual(self.admin.name, payload['name'])
+        self.assertTrue(self.admin.check_password(payload['password']))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         

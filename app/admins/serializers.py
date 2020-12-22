@@ -7,7 +7,7 @@ class AdminSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 
-                  'email', 'is_staff', 'password',
+                  'email', 'is_staff', 'password', 'title',
         )
         extra_kwargs = {
             'password': {
@@ -19,7 +19,16 @@ class AdminSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         """To use the create_user function and creat an admin with encrypted password"""
         return get_user_model().objects.create_user(**validated_data)
+    
+    def update(self, instance, validated_data):
+        """Edit the admin and set the password correctly and return it"""
+        password = validated_data.pop('password', None)
+        admin = super().update(instance, validated_data)
 
+        if password:
+            admin.set_password(password)
+            admin.save()
+        return admin
 
 class AuthTokenSerializer(serializers.Serializer):
     """The Serializer class for the admin authentication object"""

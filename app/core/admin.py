@@ -15,12 +15,12 @@ class UserAdmin(BaseUserAdmin):
         }),
         (_('Personal Information'), {
             "fields": (
-                'name', 'phone', 'postal_code', 'email'
+                'name', 'phone', 'postal_code', 'email', 'address', 'title', 'nationality'
             )
         }),
         (_('Permissions'), {
             "fields": (
-                'is_staff', 'is_active', 'is_superuser'
+                'is_staff', 'is_active', 'is_superuser', 'created_by'
             )
         }),
         (_('Important Dates'), {
@@ -32,3 +32,4 @@ class UserAdmin(BaseUserAdmin):
     
 
 admin.site.register(models.User, UserAdmin)
+admin.site.register(models.Country)

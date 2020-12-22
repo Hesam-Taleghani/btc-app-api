@@ -1,18 +1,31 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from core import models
+
+def sample_user(username='testuser', email='test@admin.com', password='testpassword'):
+    """Creates a sample user"""
+    return get_user_model().objects.create_user(username, email, password)
+
+def sample_country(name='test', code='000', 
+                   abreviation='TST', is_covered=True):
+    user = sample_user()
+    return models.Country.objects.create(created_by=user, name=name, code=code, 
+                                         abreviation=abreviation, is_covered=is_covered)
 
 class ModelTest(TestCase):
     """ Test class for core app"""
 
     def test_creat_user(self):
-        """testing to creat e user is successful using email, username and password."""
+        """testing to creat e user is successful using email, username, country and password."""
         email = "test@test.com"
-        username = "test"
+        username = "testusercreate"
         password = "Test1234"
+        country = sample_country()
         user = get_user_model().objects.create_user(
             email = email,
             username = username,
-            password = password
+            password = password,
+            nationality = country
         )
 
         self.assertEqual(user.email, email)
@@ -39,3 +52,15 @@ class ModelTest(TestCase):
         self.assertTrue(user.is_staff)
         self.assertTrue(user.is_superuser)
         
+    def test_country_creation(self):
+        """Test that creating a new country works"""
+        country = models.Country.objects.create(
+            created_by = sample_user(),
+            name='test',
+            code='010',
+            abreviation='TST',
+            is_covered=True
+        )
+
+        self.assertEqual(country.name, 'test')
+        self.assertEqual(str(country), 'TST')
