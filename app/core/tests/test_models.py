@@ -64,3 +64,71 @@ class ModelTest(TestCase):
 
         self.assertEqual(country.name, 'test')
         self.assertEqual(str(country), 'TST')
+    
+    def test_VirtualService_creation(self):
+        """To Test creating virtual services, with and without price and cost"""
+        service = models.VirtualService.objects.create(
+            name = 'test service',
+            price = 67.99,
+            cost = 54,
+            created_by = sample_user(),
+        )
+
+        self.assertEqual(service.price, 67.99)
+        self.assertEqual(service.cost, 54)
+        self.assertEqual(str(service), 'test service')
+
+    def test_goal_creation(self):
+        """Test that the marketing goals are created successfully"""
+        admin = sample_user()
+        goal = models.MarketingGoal.objects.create(
+            trading_name='test goal',
+            legal_name='test name',
+            trading_address='test address',
+            postal_code='1234567',
+            land_line='44332211',
+            bussines_field='test field',
+            created_by=admin
+        )
+        self.assertEqual(goal.trading_name, 'test goal')
+        self.assertEqual(goal.created_by, admin)
+        self.assertEqual(goal.get_status_display(), 'In Waiting Queue')
+    
+    def test_pos_create(self):
+        """Test to create a compoany, model, and a pos related to them, 
+           1. Test to create a company, 2. Test to create a model for company,
+           3. Test to create a pos with large serial number to get validation error
+           4. Test a validate data for pos"""
+        admin = sample_user()
+        company = models.POSCompany.objects.create(
+            name = 'testCompany',
+            serial_number_length = 8,
+            created_by = admin
+        )
+        self.assertEqual(company.name, 'testCompany')
+        self.assertEqual(company.serial_number_length, 8)
+        model = models.POSModel.objects.create(
+            name='testModel',
+            company=company,
+            hardware_cost=25,
+            software_cost=25,
+            price=79.99,
+            created_by=admin
+        )
+        self.assertEqual(model.name, 'testModel')
+        self.assertEqual(model.price, 79.99)
+        self.assertEqual(str(model), 'testCompany testModel')
+        # with self.assertRaises(ValueError):
+        #     models.POS.objects.create(serial_number='1234567890',
+        #                               pos_type="D",
+        #                               model=model,
+        #                               created_by=admin)
+        pos = models.POS.objects.create(
+                serial_number='12345678',
+                type="D",
+                model=model,
+                created_by=admin  
+        )
+        self.assertEqual(str(pos), 'testCompany testModel 12345678')
+        self.assertEqual(pos.get_type_display(), 'Desktop')
+        self.assertEqual(pos.serial_number, '12345678')

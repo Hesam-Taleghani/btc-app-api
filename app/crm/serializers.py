@@ -8,7 +8,7 @@ class CountrySerializer(serializers.ModelSerializer):
     class Meta:
         model = Country
         verbose_name_plural = 'Countries'
-        fields = ('id', 'name', 'code', 'abreviation', 'is_covered', 'created_by')
+        fields = ('id', 'name', 'code', 'abreviation', 'is_covered')
         extra_kwargs = {
             'id': {
                 'read_only': True
