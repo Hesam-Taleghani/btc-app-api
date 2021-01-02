@@ -148,4 +148,11 @@ class PrivateAdminProfileApi(TestCase):
         self.assertEqual(self.admin.name, payload['name'])
         self.assertTrue(self.admin.check_password(payload['password']))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
+
+  
+    # def test_promoting_admin(self):
+    #     """Test that a 
+    #     1. superuser can promote an admin or 
+    #     2. demote a superuser that is created by himself"""
+
