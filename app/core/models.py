@@ -23,9 +23,9 @@ class UserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password):
+    def create_superuser(self, username, email, password, **extra_fields):
         """creating and saving a new superuser"""
-        user = self.create_user(username, email, password)
+        user = self.create_user(username, email, password, **extra_fields)
         user.is_staff = True
         user.is_superuser = True
         user.save(using=self._db)
@@ -51,6 +51,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     objects = UserManager()
 
     USERNAME_FIELD = 'username'
+    EMAIL_FIELD = 'email'
 
 
 class Country(models.Model):
@@ -80,6 +81,7 @@ class VirtualService(models.Model):
     name = models.CharField(max_length=255, unique=True)
     price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
+    availability = models.BooleanField(default=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
                                    blank=True, null=True)
     created_at = models.DateField(auto_now_add=True)

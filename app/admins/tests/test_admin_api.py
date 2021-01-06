@@ -4,22 +4,57 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
 
+from admins.serializers import AdminSerializer
+
+ADMIN_LIST_URL = reverse('admins:list')
 CREATE_ADMIN_URL = reverse('admins:create')
-TOKEN_URL = reverse('admins:token')
 MY_PROFILE_URL = reverse('admins:me')
+TOKEN_URL = reverse('admins:token')
 
 def create_admin(**params):
     return get_user_model().objects.create_user(**params)
+
+def create_super_user(**params):
+    return get_user_model().objects.create_superuser(**params)
 
 
 class PrivateAdminApiTest(TestCase):
     """Test for the admins api (private - only superusers can create admins)"""
 
+    def login_super_user(self):
+        """To Create and log in as a superuser"""
+        superuser = create_super_user(
+            username='superuser',
+            email='email@super.user',
+            password='12345687super'
+        )
+        self.client.force_authenticate(user=superuser)
+
     def setUp(self):
         self.client = APIClient()
     
+    def super_user_required(self):
+        """Test that it is required to be a superuser to create a new user"""
+        payload = {
+            'username': 'testuser',
+            'name': 'test user',
+            'email': 'test@user.com',
+            'password': 'test1234password'
+        }
+        response = self.client.post(CREATE_ADMIN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        admin = create_admin(username='testuser',
+                             name='test',
+                             email='test@admin.com',
+                             password='1234password'
+                            )
+        self.client.force_authenticate(user=admin)
+        response = self.client.post(CREATE_ADMIN_URL, payload)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
     def test_create_valid_admin(self):
         """Test creating a admins with valid payloads (json) is successful"""
+        self.login_super_user()
         payload = {
             'username': 'testuser',
             'name': 'test user',
@@ -41,6 +76,7 @@ class PrivateAdminApiTest(TestCase):
             'password': 'test1234password'
         }
         create_admin(**payload)
+        self.login_super_user()
         response = self.client.post(CREATE_ADMIN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
     
@@ -52,6 +88,7 @@ class PrivateAdminApiTest(TestCase):
             'email': 'test@user.com',
             'password': '12345'
         }
+        self.login_super_user()
         response = self.client.post(CREATE_ADMIN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         admincreated = get_user_model().objects.filter(
@@ -97,6 +134,76 @@ class PrivateAdminApiTest(TestCase):
         response = self.client.get(MY_PROFILE_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
     
+    def test_login_required_for_promoting(self):
+        """Test that a normal admin or unauthorized can not promote or demote"""
+        admin = create_admin(
+            username='testadmin',
+            name='test admin',
+            email='test@admin.com',
+            password='admin1234admin',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        testuser = create_admin(
+            username='testuser',
+            name='test user',
+            email='test@user.com',
+            password='user1234',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        response = self.client.post(reverse('admins:deactive', args=[testuser.id]))
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        
+        self.client.force_authenticate(user=admin)
+        response = self.client.post(reverse('admins:deactive', args=[testuser.pk]))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+    
+    def test_superuser_required_for_admin_list(self):
+        """Test that only superusers can see the admins list"""
+        admin = create_admin(
+            username='testadmin',
+            name='test admin',
+            email='test@admin.com',
+            password='admin1234admin',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        testuser = create_admin(
+            username='testuser',
+            name='test user',
+            email='test@user.com',
+            password='user1234',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        response = self.client.get(ADMIN_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        self.client.force_authenticate(user=admin)
+        response = self.client.get(ADMIN_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        self.login_super_user()
+        response = self.client.get(ADMIN_LIST_URL)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        admins = get_user_model().objects.all().order_by('name')
+        adminserialized = AdminSerializer(admins, many=True)
+        self.assertEqual(response.data, adminserialized.data)
+        
+
 class PrivateAdminProfileApi(TestCase):
     """Test the profile for authorized admin"""
 
@@ -120,6 +227,7 @@ class PrivateAdminProfileApi(TestCase):
         response = self.client.get(MY_PROFILE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data, {
+            'id': self.admin.id,
             'username': self.admin.username,
             'name': self.admin.name,
             'email': self.admin.email,
@@ -150,9 +258,57 @@ class PrivateAdminProfileApi(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-  
-    # def test_promoting_admin(self):
-    #     """Test that a 
-    #     1. superuser can promote an admin or 
-    #     2. demote a superuser that is created by himself"""
+class PrivateSuperUserUpdates(TestCase):
+    """The Test for superuser options"""
+    def setUp(self):
+        """To create and authenticate as a superuser."""
+        self.admin = create_super_user(
+            username='testsuper',
+            name='test super',
+            email='super@admin.com',
+            password='adminsuper1234admin',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tester'
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.admin)
 
+    def test_changing_admin(self):
+        """ Test that a 
+        1. superuser can promote an admin or
+        2. demote a superuser that is created by himself
+        3. deavtivate an admin
+        4. activate an admin """
+        sample_admin = create_admin(
+            username='sampleuper',
+            name='test user',
+            email='user@admin.com',
+            password='admin1234admin',
+            phone='12345678',
+            postal_code='123321',
+            birth_date='2000-01-01',
+            address='world, world',
+            title='tested'
+        )
+        response = self.client.post(reverse('admins:promote', kwargs={'pk': sample_admin.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        sample_admin.refresh_from_db()
+        self.assertEqual(sample_admin.is_staff, True)
+
+        response = self.client.post(reverse('admins:promote', kwargs={'pk': sample_admin.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        sample_admin.refresh_from_db()
+        self.assertEqual(sample_admin.is_staff, False)
+
+        response = self.client.post(reverse('admins:deactive', kwargs={'pk': sample_admin.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        sample_admin.refresh_from_db()
+        self.assertEqual(sample_admin.is_active, False)
+
+        response = self.client.post(reverse('admins:deactive', kwargs={'pk': sample_admin.id}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        sample_admin.refresh_from_db()
+        self.assertEqual(sample_admin.is_active, True)

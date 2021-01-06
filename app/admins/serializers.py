@@ -6,13 +6,16 @@ class AdminSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = get_user_model()
-        fields = ('username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 
+        fields = ('id', 'username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 
                   'email', 'is_staff', 'password', 'title',
         )
         extra_kwargs = {
             'password': {
                 'write_only': True,
                 'min_length': 6
+            }, 
+            'id': {
+                'read_only': True
             }
         }
     
