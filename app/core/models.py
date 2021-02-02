@@ -42,11 +42,13 @@ class User(AbstractBaseUser, PermissionsMixin):
     postal_code = models.CharField(max_length=25, blank=True, null=True, default=None)
     birth_date = models.DateField(auto_now=False, auto_now_add=False, blank=True, null=True, default=None)
     email = models.EmailField(max_length=254)
-    nationality = models.ForeignKey('Country', on_delete=models.SET_NULL, blank=True, null=True, default=None)
+    nationality = models.ForeignKey('Country', 
+                                    on_delete=models.SET_NULL, blank=True, null=True, default=None, 
+                                    related_name='admin_nationalities')
     created_at = models.DateTimeField(auto_now_add=True)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
-    created_by = models.ForeignKey("self", on_delete=models.SET_NULL, blank=True, null=True)
+    created_by = models.ForeignKey("self", on_delete=models.SET_NULL, blank=True, null=True, related_name="admins")
 
     objects = UserManager()
 
@@ -62,7 +64,7 @@ class Country(models.Model):
     is_covered = models.BooleanField(default=True)
     x = models.IntegerField(blank=True, null=True)
     y = models.IntegerField(blank=True, null=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='countries')
 
     def __str__(self):
         return self.abreviation
@@ -83,7 +85,7 @@ class VirtualService(models.Model):
     cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     availability = models.BooleanField(default=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='services')
     created_at = models.DateField(auto_now_add=True)
 
     def __str__(self):
@@ -112,10 +114,10 @@ class MarketingGoal(models.Model):
     note = models.TextField(blank=True, null=True, default=None)
     created_at = models.DateField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                   related_name="creator",
+                                   related_name="goals",
                                    on_delete=models.SET_NULL, blank=True, null=True)
     last_update = models.ForeignKey(settings.AUTH_USER_MODEL,
-                                    related_name="Updated_admin",
+                                    related_name="goals_updated",
                                     on_delete=models.SET_NULL, blank=True, null=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -128,21 +130,21 @@ class POSCompany(models.Model):
     name = models.CharField(max_length=110)
     serial_number_length = models.IntegerField()
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='pos_companies')
     
     def __str__(self):
         return self.name
 
 
-class POSModel(models.Model):
+class PosModel(models.Model):
     """Models of the POS making companies"""
     name = models.CharField(max_length=110)
-    company = models.ForeignKey('POSCompany', on_delete=models.CASCADE)
+    company = models.ForeignKey('POSCompany', on_delete=models.CASCADE, related_name='pos_models')
     hardware_cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     software_cost = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='pos_models_created')
     
     def __str__(self):
         return str(self.company) + ' ' + self.name
@@ -157,14 +159,15 @@ class POS(models.Model):
         ("P", "Portable")
     ]
     type = models.CharField(max_length=25, choices=type_choices)
-    model = models.ForeignKey('POSModel', on_delete=models.CASCADE)
+    model = models.ForeignKey('POSModel', on_delete=models.CASCADE, related_name='poses')
 
     note = models.TextField(blank=True, null=True, default=None)
 
     ownership = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
     status = models.BooleanField(default=False)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='poses_created')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -214,7 +217,7 @@ class Costumer(models.Model):
     registered_postal_code = models.CharField(max_length=50)
     country = models.ForeignKey('Country', on_delete=models.SET_NULL, 
                                    blank=True, null=True,
-                                   related_name='PlaceCountry')
+                                   related_name='costumer_location')
     business_postal_code = models.CharField(max_length=50)
     company_number = models.CharField(max_length=50)
     land_line = models.CharField(max_length=25)
@@ -226,7 +229,7 @@ class Costumer(models.Model):
     director_email = models.EmailField(max_length=255)
     director_address = models.CharField(max_length=255)
     director_postal_code = models.CharField(max_length=55)
-    director_natinality = models.ForeignKey('Country', related_name='DirectorNationality',
+    director_nationality = models.ForeignKey('Country', related_name='directors',
                                             on_delete=models.SET_NULL, blank=True, null=True)
     director_birth_date = models.DateField(blank=True, null=True)
 
@@ -248,16 +251,16 @@ class Costumer(models.Model):
     # credit_search = models.FileField(_(""), upload_to=None, max_length=100)
     partner_name = models.CharField(max_length=110, blank=True, null=True)
     partner_address = models.CharField(max_length=255, blank=True, null=True)
-    partner_nationality = models.ForeignKey('Country', related_name='PartnerNationality',
+    partner_nationality = models.ForeignKey('Country', related_name='partner_location',
                                             on_delete=models.SET_NULL, blank=True, null=True)
     shareholder = models.PositiveIntegerField(validators=[percent_validator,], blank=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True, related_name='Creator')
+                                   blank=True, null=True, related_name='costumers_created')
     updated_at = models.DateTimeField(auto_now=True)
     last_updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True, related_name='Updator')
+                                   blank=True, null=True, related_name='costumers_last_updated')
 
     def __str__(self):
         return str(self.trading_name) + ' ' + self.legal_name
@@ -280,7 +283,7 @@ class Costumer(models.Model):
 class TradingAddress(models.Model):
     """The model to save Trading addresses for costumers"""
     address = models.CharField(max_length=510)
-    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE)
+    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE, related_name='trading_address')
 
     def __str__(self):
         return self.address
@@ -288,7 +291,7 @@ class TradingAddress(models.Model):
 
 class Contract(models.Model):
     """The model to store the contracts"""
-    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE)
+    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE, related_name='contracts')
     face_to_face_saled = models.PositiveIntegerField(validators=[percent_validator,])
     atv = models.DecimalField(max_digits=12, decimal_places=2)
     annual_card_turnover = models.DecimalField(max_digits=12, decimal_places=2)
@@ -313,7 +316,7 @@ class Contract(models.Model):
     total_price = models.DecimalField(max_digits=12, decimal_places=2, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='contracts_created')
     
     def __str__(self):
         return str(self.costumer) + ' ' + self.get_acquire_name_display()
@@ -321,7 +324,7 @@ class Contract(models.Model):
 
 class PaperRoll(models.Model):
     """The model foe every paper roll orders"""
-    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE)
+    costumer = models.ForeignKey('Costumer', on_delete=models.CASCADE, related_name='paper_rolls')
     amount = models.PositiveIntegerField(default=0)
     cost = models.DecimalField(max_digits=12, decimal_places=2)
     price = models.DecimalField(max_digits=12, decimal_places=2)
@@ -330,7 +333,7 @@ class PaperRoll(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='paper_rolls_created')
     
     def __str__(self):
         return str(self.costumer) + ' ' + str(self.amount) + ' ' + str(self.ordered_date)
@@ -338,46 +341,46 @@ class PaperRoll(models.Model):
 
 class Payment(models.Model):
     """The model for Direct Debit Pays of the contract"""
-    contract = models.ForeignKey('Contract', on_delete=models.CASCADE)
+    contract = models.ForeignKey('Contract', on_delete=models.CASCADE, related_name='payments')
     date = models.DateTimeField()
     direct_debit_cost = models.DecimalField(max_digits=12, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='payments_created')
 
 
 class MIDRevenue(models.Model):
     """The models to save all the contracts bonuses"""
-    contract = models.ForeignKey('Contract', on_delete=models.CASCADE)
+    contract = models.ForeignKey('Contract', on_delete=models.CASCADE, related_name='mid_revenues')
     income = models.DecimalField(max_digits=12, decimal_places=2)
     profit = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateTimeField()
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='mid_revenues_created')
 
 
 class ContractPOS(models.Model):
     """The relation between contracts and POSes"""
-    contract = models.ForeignKey('Contract', on_delete=models.CASCADE)
-    pos = models.ForeignKey('POS', on_delete=models.CASCADE)
+    contract = models.ForeignKey('Contract', on_delete=models.CASCADE, related_name='contract_pos')
+    pos = models.ForeignKey('POS', on_delete=models.CASCADE, related_name='pos_contract')
     price = models.DecimalField(max_digits=12, decimal_places=2)
     cost = models.DecimalField(max_digits=12, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='contract_pos_created')
     
 
 class ContractService(models.Model):
     """The relation between contracts and Virtual Services"""
-    contract = models.ForeignKey('Contract', on_delete=models.CASCADE)
-    service = models.ForeignKey('VirtualService', on_delete=models.CASCADE)
+    contract = models.ForeignKey('Contract', on_delete=models.CASCADE, related_name='contract_service')
+    service = models.ForeignKey('VirtualService', on_delete=models.CASCADE, related_name='service_contract')
     price = models.DecimalField(max_digits=12, decimal_places=2)
     cost = models.DecimalField(max_digits=12, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
-                                   blank=True, null=True)
+                                   blank=True, null=True, related_name='contract_service_created')

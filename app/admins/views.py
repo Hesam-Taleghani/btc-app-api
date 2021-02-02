@@ -13,7 +13,8 @@ from core.models import User
 
 class CreateAdminView(generics.CreateAPIView):
     """Create a new admin"""
-    serializer_class = AdminSerializer
+    serializer_class = AdminSerializer    
+    authentication_classes = (authentication.TokenAuthentication,)
     permission_classes = (permissions.IsAdminUser,)
 
 

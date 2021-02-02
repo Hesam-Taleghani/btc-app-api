@@ -111,7 +111,7 @@ class ModelTest(TestCase):
         )
         self.assertEqual(company.name, 'testCompany')
         self.assertEqual(company.serial_number_length, 8)
-        model = models.POSModel.objects.create(
+        model = models.PosModel.objects.create(
             name='testModel',
             company=company,
             hardware_cost=25,
@@ -160,7 +160,7 @@ class ModelTest(TestCase):
                 director_email="director@test.email",
                 director_address="where director lives",
                 director_postal_code="000000",
-                director_natinality=country,
+                director_nationality=country,
                 sort_code="1221",
                 issuing_bank="test bank",
                 account_number="0000-0000-0000-0000",
@@ -193,7 +193,7 @@ class ModelTest(TestCase):
             serial_number_length=8,
             created_by=admin
         )
-        model = models.POSModel.objects.create(
+        model = models.PosModel.objects.create(
             name='testModel',
             company=company,
             hardware_cost=25,
@@ -226,7 +226,7 @@ class ModelTest(TestCase):
             director_email="director@test.email",
             director_address="where director lives",
             director_postal_code="000000",
-            director_natinality=country,
+            director_nationality=country,
             sort_code="1221",
             issuing_bank="test bank",
             account_number="0000-0000-0000-0000",
