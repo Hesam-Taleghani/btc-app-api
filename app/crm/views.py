@@ -209,7 +209,7 @@ class GoalViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Create new Merketing Goal"""
-        serializer.save(created_by=self.request.user)
+        serializer.save(created_by=self.request.user, last_update=self.request.user)
     
     def get_serializer_class(self):
         """Return appropriate Serializer"""
@@ -220,3 +220,138 @@ class GoalViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         """To update the marketing goal"""
         serializer.save(last_update=self.request.user)
+
+
+class CostumerListViewSet(generics.ListAPIView):
+    """The viewset to handle the mini-list of Costumers"""
+    serializer_class = serializers.CostumerMiniSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.Costumer.objects.all()
+
+
+class CostumerViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin):
+    """The viewset to handle creating and updating Costumers"""
+    serializer_class = serializers.CostumerSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.Costumer.objects.all()
+
+    def perform_create(self, serializer):
+        """To assign the user"""
+        serializer.save(created_by=self.request.user, last_updated_by=self.request.user)
+    
+    def perform_update(self, serializer):
+        """To assign the user who has updated"""
+        serializer.save(last_update_by=self.request.user)
+
+
+class ContractViewSet(viewsets.GenericViewSet, mixins.CreateModelMixin, mixins.UpdateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin):
+    """The viewset to handle creating and showing contracts"""
+    serializer_class = serializers.ContractSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.Contract.objects.all()
+
+    def perform_create(self, serializer):
+        """To assign the user"""
+        serializer.save(created_by=self.request.user)
+    
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return serializers.ContractListSerializer
+        if self.action == 'retrieve':
+            return serializers.ContractDetailSerializer
+        return self.serializer_class
+
+
+class ContractPosViewSet(generics.ListCreateAPIView):
+    """To see and add poses of a contract"""
+    serializer_class = serializers.ContractPosSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.ContractPOS.objects.all()
+
+    def get_queryset(self):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        return models.ContractPOS.objects.filter(contract=contract)
+    
+    def perform_create(self, serializer):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        serializer.save(created_by=self.request.user, contract=contract)
+
+
+class ContractServiceViewSet(generics.ListCreateAPIView):
+    """To see and add virtual services of a contract"""
+    serializer_class = serializers.ContractServiceSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.ContractService.objects.all()
+
+    def get_queryset(self):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        return models.ContractService.objects.filter(contract=contract)
+    
+    def perform_create(self, serializer):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        serializer.save(created_by=self.request.user, contract=contract)
+
+
+class CostumerPaperRollViewSet(generics.ListCreateAPIView, generics.DestroyAPIView):
+    """To list, create and delete PaperRolls of a costumer"""
+    serializer_class = serializers.CostumerPaperrollSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.PaperRoll.objects.all()
+
+    def get_queryset(self):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        costumer = contract.costumer
+        return models.PaperRoll.objects.filter(costumer=costumer)
+    
+    def perform_create(self, serializer):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        costumer = contract.costumer
+        serializer.save(created_by=self.request.user, costumer=costumer)
+
+
+class PaymentViewSet(generics.ListCreateAPIView, generics.DestroyAPIView):
+    """To see and add virtual services of a contract"""
+    serializer_class = serializers.PaymentSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.Payment.objects.all()
+
+    def get_queryset(self):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        return models.Payment.objects.filter(contract=contract)
+    
+    def perform_create(self, serializer):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        serializer.save(created_by=self.request.user, contract=contract)
+
+
+class MIDViewSet(generics.ListCreateAPIView, generics.DestroyAPIView):
+    """To see and add virtual services of a contract"""
+    serializer_class = serializers.MIDRevenueSerializer
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    queryset = models.Payment.objects.all()
+
+    def get_queryset(self):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        return models.MIDRevenue.objects.filter(contract=contract)
+    
+    def perform_create(self, serializer):
+        contract_id = self.kwargs.get('pk')
+        contract = get_object_or_404(models.Contract, pk=contract_id)
+        serializer.save(created_by=self.request.user, contract=contract)

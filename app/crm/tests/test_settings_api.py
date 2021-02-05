@@ -26,7 +26,7 @@ class CountryApiTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def test_login_required(self):
         """Test that log in is required for retieving countries list"""
         response = self.client.get(COUNTRY_URL)
@@ -44,7 +44,7 @@ class CountryApiTest(TestCase):
         response = self.client.post(COUNTRY_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(Country.objects.filter(name='test').exists())
-    
+
     def test_create_country_invalid(self):
         """Test Creation wont be completed with invalid payload
         1. unautherized, 2. invalid name"""
@@ -66,7 +66,6 @@ class CountryApiTest(TestCase):
         }
         response = self.client.post(COUNTRY_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_retrieving_countries(self):
         """Test to get countries list after loging in"""
@@ -95,7 +94,7 @@ class CountryApiTest(TestCase):
 
 class POSCompanyApiTest(TestCase):
     """The test case for pos company"""
-    
+
     def login(self):   
         """To create and login as an admin"""
         self.admin = get_user_model().objects.create(
@@ -104,7 +103,7 @@ class POSCompanyApiTest(TestCase):
                                               password='testpass123',
                                               name='test user')
         self.client.force_authenticate(user=self.admin)
-    
+
     def setUp(self):
         self.client = APIClient()
 
@@ -112,7 +111,7 @@ class POSCompanyApiTest(TestCase):
         """Test to check login is required for company url"""
         response = self.client.get(POS_COMPANY_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_create_valid_company(self):
         """Test to create a valid company via api"""
         self.login()
@@ -167,7 +166,7 @@ class PosModelTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def login(self):   
         """To create and login as an admin"""
         self.admin = get_user_model().objects.create(
@@ -176,7 +175,7 @@ class PosModelTest(TestCase):
                                               password='testpass123',
                                               name='test user')
         self.client.force_authenticate(user=self.admin)
-    
+
     def test_login_required(self):
         """Test for login requirement on this page"""
         response = self.client.get(POS_MODEL_URL)
@@ -201,7 +200,6 @@ class PosModelTest(TestCase):
         self.assertTrue(PosModel.objects.filter(name='name for pos model').exists())
         self.assertEqual(PosModel.objects.get(name='name for pos model').company, company)
 
-    
     def test_create_invalid_pos_model(self):
         """To Test that a model can not be created without a name"""
         self.login()
@@ -218,7 +216,7 @@ class PosModelTest(TestCase):
         response = self.client.post(reverse('crm:create-pos-model', args=[company.id]), model)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(PosModel.objects.filter(company=company).exists())
-    
+
     def test_posmodel_list(self):
         """Test to retrieve all pos models"""
         self.login()
@@ -298,7 +296,7 @@ class PosTestCase(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def login(self):   
         """To create and login as an admin"""
         self.admin = get_user_model().objects.create(
@@ -307,12 +305,12 @@ class PosTestCase(TestCase):
                                               password='testpass123',
                                               name='test user')
         self.client.force_authenticate(user=self.admin)
-    
+
     def test_login_required(self):
         """Test that login is required for pos url"""
         response = self.client.get(POS_URL)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-    
+
     def test_create_invalid_pos(self):
         """Test that a pos can not be created without serial number, type, model and invalid serial number length."""
         self.login()
@@ -349,7 +347,7 @@ class PosTestCase(TestCase):
         response = self.client.post(POS_URL, pos3)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(POS.objects.filter(model=posmodel).exists())
-    
+
     def test_create_valid_pos(self):
         """Test to create a valid pos"""
         self.login()
@@ -374,7 +372,7 @@ class PosTestCase(TestCase):
         response = self.client.post(POS_URL, pos)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(POS.objects.filter(serial_number='23004').exists())
-    
+
     def test_pos_list(self):
         """Test to get all poses"""
         self.login()
@@ -407,7 +405,7 @@ class PosTestCase(TestCase):
         serializer = PosSerializer(poses, many=True)
         response = self.client.get(POS_URL)
         self.assertEqual(response.data, serializer.data)
-    
+
     def test_invalid_update(self):
         """Test that the serial number length should be valid to update the instance"""
         self.login()
@@ -461,7 +459,7 @@ class PosTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         pos.refresh_from_db()
         self.assertEqual(pos.serial_number, '20201')
-    
+
     def test_pos_active(self):
         """To test activate and deactivating a pos"""
         self.login()
@@ -499,7 +497,7 @@ class ServiceTest(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def login(self):   
         """To create and login as an admin"""
         self.admin = get_user_model().objects.create(
@@ -508,7 +506,7 @@ class ServiceTest(TestCase):
                                               password='testpass123',
                                               name='test user')
         self.client.force_authenticate(user=self.admin)
-    
+
     def test_login_required(self):
         """Test that login is required"""
         response = self.client.get(SERVICE_URL)
@@ -541,7 +539,7 @@ class ServiceTest(TestCase):
         response = self.client.post(SERVICE_URL, service)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(VirtualService.objects.filter(name='Test Service').exists())
-    
+
     def test_retrieving_services(self):
         """Test to get all the services"""
         self.login()
@@ -583,7 +581,7 @@ class IsUsed(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-    
+
     def login(self):   
         """To create and login as an admin"""
         self.admin = get_user_model().objects.create(
@@ -592,7 +590,7 @@ class IsUsed(TestCase):
                                               password='testpass123',
                                               name='test user')
         self.client.force_authenticate(user=self.admin)
-    
+
     def test_country_used(self):
         """To Test that is a country used and get the correct response"""
         self.login()
@@ -640,7 +638,7 @@ class IsUsed(TestCase):
         response = self.client.get(reverse('crm:country-used', args=[country1.id]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['used'])
-    
+
     def test_company_used(self):
         """Test that company is used"""
         self.login()
@@ -691,7 +689,7 @@ class IsUsed(TestCase):
         response = self.client.get(reverse('crm:model-used', args=[model1.id]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['used'])
-    
+
     def test_pos_used(self):
         """Test that pos is used""" 
         self.login()
@@ -766,7 +764,8 @@ class IsUsed(TestCase):
             contract=contract,
             pos=pos,
             price=120.00,
-            cost=100.00,
+            hardware_cost=100.00,
+            software_cost=10.00,
             created_by=self.admin
         )
         response = self.client.get(reverse('crm:pos-used', args=[pos.id]))
@@ -775,7 +774,7 @@ class IsUsed(TestCase):
         response1 = self.client.get(reverse('crm:pos-used', args=[pos1.id]))
         self.assertEqual(response1.status_code, status.HTTP_200_OK)
         self.assertFalse(response1.data['used'])
-    
+
     def test_service_used(self):
         """Test that Service is used""" 
         self.login()
@@ -848,4 +847,3 @@ class IsUsed(TestCase):
         response = self.client.get(reverse('crm:service-used', args=[service1.id]))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['used'])
-                

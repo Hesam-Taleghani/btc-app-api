@@ -9,5 +9,6 @@ urlpatterns = [
     path('token/', views.CreateTokenView.as_view(), name='token'),
     path('me/', views.ManageUserView.as_view(), name='me'),
     path('promote/<int:pk>/', views.PromotingAdmin.as_view(), name='promote'),
-    path('deactive/<int:pk>/', views.DeactiveAdmin.as_view(), name='deactive')
+    path('deactive/<int:pk>/', views.DeactiveAdmin.as_view(), name='deactive'),
+    path('profile/<int:pk>/', views.AdminProfileAPIView.as_view(), name='profile')
 ]

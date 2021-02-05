@@ -8,6 +8,8 @@ router.register('companies', views.POSCompanyViewSet)
 router.register('poses', views.PosViewSet)
 router.register('services', views.ServiceViewSet)
 router.register('goals', views.GoalViewSet)
+router.register('costumers', views.CostumerViewSet)
+router.register('contracts', views.ContractViewSet)
 
 app_name = 'crm'
 
@@ -21,5 +23,11 @@ urlpatterns = [
     path('is-used/model/<int:pk>/', views.PosModelIsUsed.as_view(), name='model-used'),
     path('is-used/pos/<int:pk>/', views.POSIsUsed.as_view(), name='pos-used'),
     path('is-used/service/<int:pk>/', views.ServiceIsUsed.as_view(), name='service-used'),
-    path('pos-active/<int:pk>/', views.ActivePos.as_view(), name='pos-active')
+    path('pos-active/<int:pk>/', views.ActivePos.as_view(), name='pos-active'),
+    path('allcostumers/', views.CostumerListViewSet.as_view(), name='all-costumers'),
+    path('contracts/<int:pk>/pos/', views.ContractPosViewSet.as_view(), name='contract-pos'),
+    path('contracts/<int:pk>/service/', views.ContractServiceViewSet.as_view(), name='contract-service'),
+    path('contracts/<int:pk>/paperroll/', views.CostumerPaperRollViewSet.as_view(), name='contract-paperroll'),
+    path('contracts/<int:pk>/payment/', views.PaymentViewSet.as_view(), name='contract-payment'),
+    path('contracts/<int:pk>/mid/', views.MIDViewSet.as_view(), name='contract-mid')
 ]

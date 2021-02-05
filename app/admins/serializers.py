@@ -3,11 +3,11 @@ from rest_framework import serializers
 
 class AdminSerializer(serializers.ModelSerializer):
     """Model Serializer for admin objects"""
-
+    nation = serializers.SerializerMethodField()
     class Meta:
         model = get_user_model()
-        fields = ('id', 'username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 
-                  'email', 'is_staff', 'password', 'title',
+        fields = ('id', 'username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 'is_active',
+                  'email', 'is_staff', 'password', 'title', 'nationality', 'nation'
         )
         extra_kwargs = {
             'password': {
@@ -32,6 +32,23 @@ class AdminSerializer(serializers.ModelSerializer):
             admin.set_password(password)
             admin.save()
         return admin
+    
+    def get_nation(self, obj):
+        return str(obj.nationality)
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    """The serializer to see other admins"""
+    nation = serializers.SerializerMethodField()
+    class Meta:
+        model = get_user_model()
+        fields = ('id', 'username', 'name', 'address', 'phone', 'postal_code', 'birth_date', 
+                  'email', 'is_staff', 'title', 'nationality', 'nation', 'last_login'
+        )
+
+    def get_nation(self, obj):
+        return str(obj.nationality)
+
 
 class AuthTokenSerializer(serializers.Serializer):
     """The Serializer class for the admin authentication object"""
@@ -51,7 +68,7 @@ class AuthTokenSerializer(serializers.Serializer):
             password=password
         )
         if not admin:
-            msg = "Unable to authenticate Admin with provided credentials."
+            msg = "Authentication Failed"
             raise serializers.ValidationError(msg, code='authentication')
         attrs['user'] = admin
         return attrs

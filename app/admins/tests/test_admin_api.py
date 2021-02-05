@@ -63,7 +63,7 @@ class PrivateAdminApiTest(TestCase):
         }
         response = self.client.post(CREATE_ADMIN_URL, payload)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        admin = get_user_model().objects.get(**response.data)
+        admin = get_user_model().objects.get(id=response.data['id'])
         self.assertTrue(admin.check_password(payload['password']))
         self.assertNotIn('password', response.data)
     
@@ -226,18 +226,7 @@ class PrivateAdminProfileApi(TestCase):
         """Test retrieving profile for logged in admin"""
         response = self.client.get(MY_PROFILE_URL)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data, {
-            'id': self.admin.id,
-            'username': self.admin.username,
-            'name': self.admin.name,
-            'email': self.admin.email,
-            'address': self.admin.address,
-            'phone': self.admin.phone,
-            'postal_code': self.admin.postal_code,
-            'birth_date': self.admin.birth_date,
-            'title': self.admin.title,
-            'is_staff': False,
-        })
+        self.assertEqual(response.data, AdminSerializer(self.admin).data)
 
     def test_post_profile_not_allowed(self):
         """Test that post method is not allowed on this url"""

@@ -16,14 +16,12 @@ class UserManager(BaseUserManager):
         """Creat and Save a new user into database by all the given fields."""
         if not username:
             raise ValueError('User Must Have Username!')
-        if not email:
-            raise ValueError('User Must Have Email Address!')
         user = self.model(email=self.normalize_email(email), username=username, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password, **extra_fields):
+    def create_superuser(self, username, password, email=None, **extra_fields):
         """creating and saving a new superuser"""
         user = self.create_user(username, email, password, **extra_fields)
         user.is_staff = True
@@ -67,7 +65,7 @@ class Country(models.Model):
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='countries')
 
     def __str__(self):
-        return self.abreviation
+        return self.name
     
     def save(self, *args, **kwargs):
         """To save the default abreviaiton as the first three letters in capital."""
@@ -96,7 +94,7 @@ class MarketingGoal(models.Model):
     """The model for marketing goals to add to the costumers"""
     trading_name = models.CharField(max_length=110)
     legal_name = models.CharField(max_length=110, blank=True, null=True)
-    bussines_field = models.CharField(max_length=110)
+    business_field = models.CharField(max_length=110)
     land_line = models.CharField(max_length=30, blank=True, null=True)
     trading_address = models.CharField(max_length=255, blank=True, null=True)
     postal_code = models.CharField(max_length=25, blank=True, null=True)
@@ -147,7 +145,7 @@ class PosModel(models.Model):
                                    blank=True, null=True, related_name='pos_models_created')
     
     def __str__(self):
-        return str(self.company) + ' ' + self.name
+        return self.name
 
 
 class POS(models.Model):
@@ -171,7 +169,7 @@ class POS(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return str(self.model) + ' ' + self.serial_number
+        return self.serial_number
     
     def clean(self, *args, **kwargs):
         if len(self.serial_number) != self.model.company.serial_number_length:
@@ -367,7 +365,8 @@ class ContractPOS(models.Model):
     contract = models.ForeignKey('Contract', on_delete=models.CASCADE, related_name='contract_pos')
     pos = models.ForeignKey('POS', on_delete=models.CASCADE, related_name='pos_contract')
     price = models.DecimalField(max_digits=12, decimal_places=2)
-    cost = models.DecimalField(max_digits=12, decimal_places=2)
+    hardware_cost = models.DecimalField(max_digits=12, decimal_places=2)
+    software_cost = models.DecimalField(max_digits=12, decimal_places=2)
 
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, 
